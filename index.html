@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rehabilitacja narządu ruchu ICD-9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: lewy panel = katalog schorzeń z wyszukiwarką; prawy = karta schorzenia z osią faz. Kolory kodują rodzaj procedury: kobalt = kinezyterapia, bursztyn = fizykoterapia, łupek = diagnostyka. */
+:root{
+  --bg:#f3f5f8;
+  --surface:#ffffff;
+  --ink:#16202e;
+  --muted:#5b6778;
+  --line:#dce2ea;
+  --accent:#1f4fb8;
+  --accent-soft:#e6edfb;
+  --amber:#a55c00;
+  --amber-soft:#fbf0e1;
+  --slate:#4a5a6e;
+  --slate-soft:#eaeef3;
+  --op:#6a3fa0;
+  --op-soft:#f1eafa;
+  --warn:#b42318;
+  --warn-soft:#fdecea;
+  --ok:#1d7a46;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f141c;--surface:#161d28;--ink:#e6ebf2;--muted:#9aa6b6;--line:#283243;
+    --accent:#7fa6ff;--accent-soft:#1a2742;--amber:#f0b25c;--amber-soft:#2e2414;
+    --slate:#a9b6c7;--slate-soft:#1f2836;--op:#c3a2ee;--op-soft:#2a2038;
+    --warn:#ff8b80;--warn-soft:#3a1c1a;--ok:#5fd394;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f141c;--surface:#161d28;--ink:#e6ebf2;--muted:#9aa6b6;--line:#283243;
+  --accent:#7fa6ff;--accent-soft:#1a2742;--amber:#f0b25c;--amber-soft:#2e2414;
+  --slate:#a9b6c7;--slate-soft:#1f2836;--op:#c3a2ee;--op-soft:#2a2038;
+  --warn:#ff8b80;--warn-soft:#3a1c1a;--ok:#5fd394;color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:330px 1fr;height:100%}
+header.top{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);background:var(--surface);flex-wrap:wrap}
+.app{grid-template-rows:auto 1fr}
+.brand{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:.01em}
+.brand small{display:block;font-family:var(--body);font-weight:400;font-size:12px;color:var(--muted);letter-spacing:0}
+.tabs{display:flex;gap:4px;margin-left:auto;background:var(--slate-soft);padding:3px;border-radius:8px}
+.tabs button{border:0;background:transparent;padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:500;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+aside{border-right:1px solid var(--line);background:var(--surface);overflow:auto;display:flex;flex-direction:column}
+.search{padding:14px 16px 8px;position:sticky;top:0;background:var(--surface);z-index:2;display:grid;gap:8px}
+.search input{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;font-size:12.5px;cursor:pointer;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.group{padding:6px 0 10px}
+.group h3{font-family:var(--display);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 16px 4px;font-weight:600}
+.item{display:block;width:100%;text-align:left;border:0;background:transparent;padding:8px 16px 8px 14px;border-left:3px solid transparent;cursor:pointer}
+.item:hover{background:var(--bg)}
+.item[aria-current="true"]{background:var(--accent-soft);border-left-color:var(--accent)}
+.item .nm{font-weight:500;display:block;line-height:1.3}
+.item .cd{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.empty{padding:16px;color:var(--muted)}
+main{overflow:auto;padding:24px clamp(16px,3vw,40px) 60px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:20px}
+.crumb{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-family:var(--display);font-weight:600}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,3vw,32px);line-height:1.15;margin:2px 0 6px;text-wrap:balance}
+.lead{color:var(--muted);max-width:70ch;margin:0}
+.codes{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.code{font-family:var(--mono);font-size:12.5px;border-radius:5px;padding:2px 7px;border:1px solid var(--line);background:var(--surface);white-space:nowrap}
+.code.icd10{border-color:var(--slate);color:var(--slate)}
+.code.op{background:var(--op-soft);color:var(--op);border-color:transparent}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.fact{background:var(--surface);padding:12px 14px}
+.fact .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-family:var(--display);font-weight:600}
+.fact .v{font-weight:500;margin-top:2px}
+.alert{border-left:4px solid var(--warn);background:var(--warn-soft);border-radius:0 10px 10px 0;padding:12px 16px}
+.alert h4,.ebm h4,.diagbox h4{margin:0 0 6px;font-family:var(--display);font-size:14px;letter-spacing:.04em;text-transform:uppercase}
+.alert h4{color:var(--warn)}
+.alert ul,.ebm p{margin:0}
+.alert ul{padding-left:18px}
+.alert li{margin:2px 0}
+.ebm{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:12px 16px}
+.ebm h4{color:var(--ok)}
+.diagbox{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:12px 16px}
+.diagbox h4{color:var(--slate)}
+.diagbox .codes{margin-top:0}
+.diagbox .code{background:var(--slate-soft);border-color:transparent;color:var(--ink);white-space:normal}
+.diagbox .code b{font-weight:600;color:var(--slate)}
+.stepper{display:flex;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.step{flex:1;min-width:0;border:0;background:transparent;padding:10px 12px;text-align:left;cursor:pointer;border-right:1px solid var(--line);position:relative}
+.step:last-child{border-right:0}
+.step:hover{background:var(--bg)}
+.step .n{font-family:var(--display);font-weight:700;color:var(--accent);font-size:13px}
+.step .t{display:block;font-weight:500;font-size:13.5px;line-height:1.25}
+.step .tm{display:block;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.phase{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;scroll-margin-top:12px}
+.phase-h{display:flex;align-items:baseline;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.phase-h .num{font-family:var(--display);font-weight:700;font-size:22px;color:var(--accent);min-width:2ch}
+.phase-h h2{font-family:var(--display);font-size:19px;margin:0;font-weight:600}
+.phase-h .tm{font-family:var(--mono);font-size:12.5px;color:var(--muted);background:var(--bg);border-radius:5px;padding:2px 8px}
+.copy{margin-left:auto;border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:5px 10px;font-size:12.5px;cursor:pointer}
+.copy:hover{border-color:var(--accent);color:var(--accent)}
+.phase-b{padding:14px 18px;display:grid;gap:14px}
+.goals{margin:0;padding-left:18px;columns:2;column-gap:28px}
+.goals li{break-inside:avoid;margin:2px 0}
+.lbl{font-family:var(--display);font-weight:600;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.lbl.k{color:var(--accent)}.lbl.f{color:var(--amber)}.lbl.g{color:var(--muted)}
+.lbl::before{content:"";width:10px;height:10px;border-radius:2px;background:currentColor}
+.lbl.g::before{display:none}
+.proc{width:100%;border-collapse:collapse;font-size:14px}
+.proc td{padding:7px 8px;border-top:1px solid var(--line);vertical-align:top}
+.proc tr:first-child td{border-top:0}
+.proc td.c{width:92px;white-space:nowrap}
+.proc td.c span{font-family:var(--mono);font-size:12.5px;font-weight:600;padding:2px 6px;border-radius:4px;display:inline-block}
+.k-tab td.c span{background:var(--accent-soft);color:var(--accent)}
+.f-tab td.c span{background:var(--amber-soft);color:var(--amber)}
+.proc td.nm{width:38%;font-weight:500}
+.proc td.nt{color:var(--muted)}
+.proc .tag{display:inline-block;font-size:11px;font-family:var(--display);font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--amber);margin-right:6px}
+.next{border-top:1px dashed var(--line);padding-top:10px;font-size:14px}
+.next b{font-family:var(--display);font-weight:600;letter-spacing:.03em}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:0}
+.legend .lk::before{background:var(--accent)}.legend .lf::before{background:var(--amber)}.legend .ld::before{background:var(--slate)}.legend .lo::before{background:var(--op)}
+.foot{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;max-width:80ch}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:8px 14px;border-radius:8px;font-size:13.5px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+/* słownik */
+.dict-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.dict-tools input{flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+.dict{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:14px}
+.dict th{text-align:left;font-family:var(--display);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:9px 10px;background:var(--bg);border-bottom:1px solid var(--line)}
+.dict td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+.dict td.c{font-family:var(--mono);font-weight:600;white-space:nowrap}
+.dict tr.sec td{background:var(--bg);font-family:var(--display);font-weight:600;letter-spacing:.04em;text-transform:uppercase;font-size:12.5px;color:var(--muted)}
+.uses{display:flex;flex-wrap:wrap;gap:4px}
+.uses a{font-size:12px;color:var(--accent);text-decoration:none;border:1px solid var(--accent-soft);background:var(--accent-soft);padding:1px 7px;border-radius:999px}
+.uses a:hover{text-decoration:underline}
+.gk{color:var(--accent)}.gf{color:var(--amber)}.gd{color:var(--slate)}.go{color:var(--op)}
+.mobile-pick{display:none}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
+  aside{max-height:none;border-right:0;border-bottom:1px solid var(--line)}
+  aside .list{display:none}
+  .mobile-pick{display:block}
+  .mobile-pick select{width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+  .cols{grid-template-columns:1fr}
+  .goals{columns:1}
+  .stepper{flex-direction:column}
+  .step{border-right:0;border-bottom:1px solid var(--line)}
+  .proc td.nm{width:auto}
+  .proc tr{display:grid;grid-template-columns:92px 1fr}
+  .proc td.nt{grid-column:2;padding-top:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">Rehabilitacja narządu ruchu<small>Protokoły kinezyterapii i fizykoterapii z kodami ICD-9 PL</small></div>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-cat" aria-selected="true">Schorzenia</button>
+      <button role="tab" id="tab-dict" aria-selected="false">Słownik ICD-9</button>
+    </div>
+  </header>
+  <aside>
+    <div class="search">
+      <input id="q" type="search" placeholder="Szukaj: nazwa, ICD-10, ICD-9…" aria-label="Szukaj schorzenia">
+      <div class="chips" id="chips"></div>
+      <div class="mobile-pick"><select id="pick" aria-label="Wybierz schorzenie"></select></div>
+    </div>
+    <div class="list" id="list"></div>
+  </aside>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+/* ===== Słownik kodów ICD-9 PL (nazwy wg słownika ICD-9 PL, wersja obowiązująca od 01.01.2025) ===== */
+const G = {d:'Diagnostyka fizjoterapeutyczna',k:'Kinezyterapia',f:'Fizykoterapia i masaż',o:'Leczenie operacyjne / nastawienie'};
+const D = {
+'93.0101':['Ocena lokomocji','d'],
+'93.0102':['Ocena samoobsługi','d'],
+'93.0103':['Ocena sprawności manualnej','d'],
+'93.0104':['Ocena funkcjonalna kręgosłupa i miednicy','d'],
+'93.0105':['Ocena równowagi i stabilności ciała','d'],
+'93.02':['Ocena potrzeb zaopatrzenia ortotycznego','d'],
+'93.04':['Badanie mięśni','d'],
+'93.05':['Badanie zakresu ruchów','d'],
+'93.06':['Pomiary długości kończyn','d'],
+'93.07':['Pomiary ciała','d'],
+'93.1101':['Ćwiczenia bierne stawu w jednej płaszczyźnie prowadzone manualnie','k','Ćwiczenia bierne'],
+'93.1102':['Ćwiczenia bierne całej kończyny prowadzone jednocześnie manualnie','k','Ćwiczenia bierne'],
+'93.1104':['Ćwiczenia bierne całej kończyny prowadzone jednocześnie mechanicznie','k','Ćwiczenia bierne'],
+'93.1106':['Ćwiczenia bierne redresyjne stawu w jednej płaszczyźnie prowadzone manualnie','k','Ćwiczenia bierne'],
+'93.1131':['Ćwiczenia czynno-bierne','k','Ćwiczenia z udziałem fizjoterapeuty'],
+'93.1132':['Ćwiczenia wspomagane','k','Ćwiczenia z udziałem fizjoterapeuty'],
+'93.1133':['Ćwiczenia prowadzone','k','Ćwiczenia z udziałem fizjoterapeuty'],
+'93.1201':['Ćwiczenia czynne w odciążeniu z oporem','k','Ćwiczenia czynne'],
+'93.1202':['Ćwiczenia czynne wolne','k','Ćwiczenia czynne'],
+'93.1204':['Ćwiczenia samowspomagane','k','Ćwiczenia czynne'],
+'93.1205':['Ćwiczenia czynne w odciążeniu','k','Ćwiczenia czynne'],
+'93.1301':['Ćwiczenia izometryczne','k','Ćwiczenia z oporem'],
+'93.1304':['Ćwiczenia izotoniczne','k','Ćwiczenia z oporem'],
+'93.1305':['Ćwiczenia izokinetyczne','k','Ćwiczenia z oporem'],
+'93.1401':['Ćwiczenia jednopłaszczyznowe kilku stawów na przyrządach','k','Ćwiczenia na przyrządach'],
+'93.1402':['Ćwiczenia wielopłaszczyznowe kilku stawów na przyrządach','k','Ćwiczenia na przyrządach'],
+'93.15':['Mobilizacja segmentu ruchowego kręgosłupa','k','Mobilizacje'],
+'93.1501':['Mobilizacja odcinka szyjnego kręgosłupa','k','Mobilizacje'],
+'93.1601':['Mobilizacja małych stawów','k','Mobilizacje'],
+'93.1602':['Mobilizacja dużych stawów','k','Mobilizacje'],
+'93.1806':['Ćwiczenia oddechowe czynnie i z oporem','k','Usprawnianie oddechowe'],
+'93.1901':['Ćwiczenia równoważne','k','Usprawnianie funkcjonalne'],
+'93.1902':['Ćwiczenia rozluźniające i relaksujące','k','Usprawnianie funkcjonalne'],
+'93.1903':['Ćwiczenia sprawności manualnej','k','Usprawnianie funkcjonalne'],
+'93.1904':['Ćwiczenia samoobsługi','k','Usprawnianie funkcjonalne'],
+'93.1909':['Ćwiczenia ogólnousprawniające indywidualne','k','Usprawnianie funkcjonalne'],
+'93.1910':['Ćwiczenia ogólnousprawniające grupowe','k','Usprawnianie funkcjonalne'],
+'93.1911':['Ćwiczenia koordynacji ruchowej','k','Usprawnianie funkcjonalne'],
+'93.1912':['Poizometryczna relaksacja mięśni','k','Usprawnianie funkcjonalne'],
+'93.21':['Wyciąg','k','Wyciąg, chód, zaopatrzenie'],
+'93.2202':['Pionizacja czynna','k','Wyciąg, chód, zaopatrzenie'],
+'93.2203':['Przygotowanie do chodzenia','k','Wyciąg, chód, zaopatrzenie'],
+'93.2204':['Nauka czynności lokomocyjnych','k','Wyciąg, chód, zaopatrzenie'],
+'93.2401':['Ćwiczenia używania protez i aparatów ortopedycznych','k','Wyciąg, chód, zaopatrzenie'],
+'93.2402':['Nauka chodu o kulach i innym sprzęcie pomocniczym','k','Wyciąg, chód, zaopatrzenie'],
+'93.27':['Streching mięśni lub ścięgien','k','Wyciąg, chód, zaopatrzenie'],
+'93.28':['Streching powięzi','k','Wyciąg, chód, zaopatrzenie'],
+'93.3101':['Indywidualne ćwiczenia w wodzie','k','Ćwiczenia w wodzie'],
+'93.3103':['Zbiorowe ćwiczenia w basenie','k','Ćwiczenia w wodzie'],
+'93.3808':['Metody neurofizjologiczne – Metoda PNF','k','Metody specjalne i terapia manualna'],
+'93.3810':['Metody neurofizjologiczne – ćwiczenia wspomagane zastępczym sprzężeniem zwrotnym (biofeedback)','k','Metody specjalne i terapia manualna'],
+'93.3812':['Plastrowanie dynamiczne /Kinesiology Taping/','k','Metody specjalne i terapia manualna'],
+'93.3816':['Metody terapii manualnej – Metoda Cyriaxa','k','Metody specjalne i terapia manualna'],
+'93.3818':['Metody terapii manualnej – Metoda Kaltenborna-Evjenta','k','Metody specjalne i terapia manualna'],
+'93.3821':['Metody terapii manualnej – Metoda Maitlanda','k','Metody specjalne i terapia manualna'],
+'93.3827':['Metody terapii manualnej – inne','k','Metody specjalne i terapia manualna'],
+'93.3831':['Ćwiczenia specjalne','k','Metody specjalne i terapia manualna'],
+'93.3301':['Kąpiel wirowa kończyn górnych','f','Hydroterapia'],
+'93.3302':['Kąpiel wirowa kończyn dolnych','f','Hydroterapia'],
+'93.3401':['Diatermia krótkofalowa','f','Ciepłolecznictwo'],
+'93.3937':['Naświetlanie promieniami IR – miejscowe','f','Ciepłolecznictwo'],
+'93.3945':['Okłady parafinowe','f','Ciepłolecznictwo'],
+'93.3949':['Fangoparafina','f','Ciepłolecznictwo'],
+'93.3953':['Zawijania lub okłady borowinowe częściowe','f','Ciepłolecznictwo'],
+'93.3951':['Krioterapia miejscowa ciekłym azotem','f','Krioterapia'],
+'93.3952':['Krioterapia miejscowa CO2','f','Krioterapia'],
+'93.3998':['Krioterapia elektrycznie schłodzonym powietrzem','f','Krioterapia'],
+'93.3920':['Jonoforeza','f','Elektroterapia'],
+'93.3928':['Prądy diadynamiczne','f','Elektroterapia'],
+'93.3929':['Prądy interferencyjne','f','Elektroterapia'],
+'93.3930':['Prądy TENS','f','Elektroterapia'],
+'93.3988':['Elektrostymulacja mięśni','f','Elektroterapia'],
+'93.3991':['Terapia wysokotonowa','f','Elektroterapia'],
+'93.3933':['Fizykoterapia impulsowym polem magnetycznym małej częstotliwości','f','Magnetoterapia'],
+'93.3983':['Pole magnetyczne stałe i niskiej częstotliwości','f','Magnetoterapia'],
+'93.3939':['Laseroterapia','f','Światłolecznictwo'],
+'93.3940':['Laseroterapia punktowa','f','Światłolecznictwo'],
+'93.3943':['Ultradźwięki','f','Ultradźwięki'],
+'93.3944':['Fonoforeza','f','Ultradźwięki'],
+'93.3912':['Masaż klasyczny – częściowy','f','Masaż'],
+'93.3916':['Masaż pneumatyczny','f','Masaż'],
+'93.3918':['Masaż – inny','f','Masaż'],
+'93.3986':['Drenaż limfatyczny miejscowy','f','Masaż'],
+'79.02':['Zamknięte nastawienie złamania bez wewnętrznej stabilizacji – kość promieniowa/łokciowa','o'],
+'79.15':['Zamknięte nastawienie złamania ze stabilizacją wewnętrzną – kość udowa','o'],
+'79.16':['Zamknięte nastawienie złamania ze stabilizacją wewnętrzną – kość piszczelowa/kość strzałkowa','o'],
+'79.31':['Otwarte nastawienie złamania z wewnętrzną stabilizacją – kość ramienna','o'],
+'79.32':['Otwarte nastawienie złamania z wewnętrzną stabilizacją – kość promieniowa/łokciowa','o'],
+'79.35':['Otwarte nastawienie złamania z wewnętrzną stabilizacją – kość udowa','o'],
+'79.36':['Otwarte nastawienie złamania z wewnętrzną stabilizacją – kość piszczelowa/kość strzałkowa','o'],
+'79.394':['Otwarte nastawienie złamania z wewnętrzną stabilizacją – inne wyszczególnione kości (rzepka)','o'],
+'81.51':['Całkowita endoprotezoplastyka stawu biodrowego','o'],
+'81.52':['Częściowa endoprotezoplastyka stawu biodrowego','o'],
+'81.54':['Całkowita pierwotna wymiana stawu kolanowego','o'],
+'81.80':['Całkowita endoproteza stawu barkowego','o'],
+'81.81':['Częściowa endoproteza stawu barkowego','o']
+};
+
+const CATS = [
+ ['zach','Złamania – leczenie zachowawcze'],
+ ['zwyr','Choroby zwyrodnieniowe'],
+ ['endo','Stan po alloplastyce stawu'],
+ ['osteo','Stan po operacyjnym leczeniu złamań']
+];
+
+/* ===== Schorzenia ===== */
+const C = [
+/* ---------- ZŁAMANIA ZACHOWAWCZE ---------- */
+{id:'radius-zach',cat:'zach',name:'Złamanie dalszej nasady kości promieniowej',short:'Colles / Smith, leczenie gipsem',
+ lead:'Najczęstsze złamanie kończyny górnej, typowo po upadku na wyprostowaną rękę, często na tle osteoporozy. Nastawienie zamknięte i unieruchomienie gipsowe przez 4–6 tygodni.',
+ icd10:[['S52.5','Złamanie dolnego końca kości promieniowej']],
+ proc:['79.02'],
+ facts:[['Unieruchomienie','gips 4–6 tyg.'],['Obciążanie ręki','bez obciążania do zrostu'],['Powrót do funkcji','3–6 mies.']],
+ diag:['93.05','93.04','93.0103','93.07'],
+ alerts:['Zespół CRPS (Sudecka): ból nieproporcjonalny do urazu, obrzęk, zmiany trofiki i potliwości – zgłosić lekarzowi','Ucisk opatrunku: sinica, drętwienie palców, narastający ból','Złamanie niskoenergetyczne po 50. r.ż. – zasugerować diagnostykę osteoporozy (densytometria)'],
+ ebm:'Podstawą jest wczesny ruch palców i stawów sąsiednich oraz program ćwiczeń po zdjęciu gipsu. Dowody dla zabiegów fizykalnych (magnetoterapia, laser, ultradźwięki) po tym złamaniu są słabe; traktuj je jako uzupełnienie ćwiczeń.',
+ phases:[
+  {name:'Okres unieruchomienia',time:'0–6 tyg.',goals:['Kontrola obrzęku (elewacja)','Utrzymanie ruchomości palców, łokcia i barku','Profilaktyka CRPS i sztywności barku'],
+   k:[['93.1202','palce (pełna pięść / wyprost), łokieć, bark – kilka razy dziennie'],['93.1301','napięcia mięśni przedramienia w opatrunku'],['93.1903','chwyt drobnych przedmiotów w zakresie, na jaki pozwala gips']],
+   f:[['93.3933','przez opatrunek gipsowy; zwyczajowo stosowana, niski poziom dowodów']],
+   next:'Zrost w RTG, zdjęcie gipsu przez lekarza.'},
+  {name:'Wczesna mobilizacja',time:'6–10 tyg.',goals:['Przywrócenie zakresu zgięcia, wyprostu i rotacji przedramienia','Redukcja obrzęku i bólu','Powrót do lekkich czynności dnia codziennego'],
+   k:[['93.1101','zgięcie/wyprost nadgarstka, odchylenia'],['93.1132','supinacja i pronacja'],['93.1202','ćwiczenia autoterapii w domu'],['93.3818','ślizgi stawu promieniowo-nadgarstkowego i promieniowo-łokciowego dalszego'],['93.1903','manipulacja przedmiotami, praca z plasteliną terapeutyczną'],['93.3812','aplikacja limfatyczna przy obrzęku']],
+   f:[['93.3301','przed ćwiczeniami, łagodna temperatura'],['93.3986','obrzęk ręki i przedramienia'],['93.3939','okolica szpary stawowej'],['93.3945','przed ćwiczeniami, gdy obrzęk ustąpił']],
+   next:'Zakres ruchu nadgarstka ≥ 50% strony zdrowej, ból nie przekracza 3/10 przy ćwiczeniach.'},
+  {name:'Wzmacnianie i funkcja',time:'10–16 tyg.',goals:['Siła chwytu','Pełna funkcja w samoobsłudze i pracy','Likwidacja przykurczów'],
+   k:[['93.1304','hantle, taśmy; zginacze i prostowniki nadgarstka'],['93.1402','przyrządy do ćwiczeń ręki i przedramienia'],['93.1106','przy utrzymującym się ograniczeniu wyprostu lub supinacji'],['93.3808','wzorce kończyny górnej'],['93.1904','trening czynności dnia codziennego']],
+   f:[['93.3930','przy bólu po wysiłku'],['93.3933','przy opóźnionym zroście (decyzja lekarza)']],
+   next:'Siła chwytu ≥ 80% strony zdrowej, powrót do pracy.'}
+ ]},
+
+{id:'humerus-zach',cat:'zach',name:'Złamanie bliższej nasady kości ramiennej',short:'stabilne, mało przemieszczone; temblak',
+ lead:'Złamanie typowe dla osób starszych z osteoporozą. Złamania stabilne i z niewielkim przemieszczeniem leczy się w temblaku z wczesnym ruchem biernym.',
+ icd10:[['S42.2','Złamanie górnego końca kości ramiennej']],
+ proc:[],
+ facts:[['Unieruchomienie','temblak 2–3 tyg.'],['Ruch czynny barku','od ok. 6 tyg.'],['Powrót do funkcji','4–6 mies.']],
+ diag:['93.05','93.04','93.0102'],
+ alerts:['Uszkodzenie nerwu pachowego: zaburzenia czucia nad mięśniem naramiennym, brak napięcia mięśnia','Wtórne przemieszczenie odłamów – kontrola RTG po 1–2 tyg. przed rozszerzeniem ćwiczeń','Ryzyko zamrożenia barku przy zbyt długim unieruchomieniu'],
+ ebm:'Wczesna mobilizacja (w ciągu 1–2 tyg.) w złamaniach stabilnych daje lepszą funkcję i mniej bólu niż przedłużone unieruchomienie, bez większej liczby powikłań.',
+ phases:[
+  {name:'Ochrona i ruch wahadłowy',time:'0–3 tyg.',goals:['Kontrola bólu','Ruch wahadłowy barku','Ruchomość łokcia, nadgarstka, palców'],
+   k:[['93.1205','ćwiczenia wahadłowe Codmana w pochyleniu'],['93.1202','łokieć, nadgarstek, palce'],['93.1301','napięcia mięśni obręczy łopatki'],['93.1806','oddech torem dolnożebrowym u osób starszych']],
+   f:[['93.3951','okolica barku, 2–3 min'],['93.3930','przeciwbólowo']],
+   next:'Kontrola RTG bez wtórnego przemieszczenia; zgoda lekarza na rozszerzenie ruchu.'},
+  {name:'Ruch bierny i wspomagany',time:'3–6 tyg.',goals:['Zgięcie i odwiedzenie w płaszczyźnie łopatki','Rotacja zewnętrzna wg tolerancji'],
+   k:[['93.1101','zgięcie, odwiedzenie, rotacje w leżeniu'],['93.1131','ćwiczenia na bloczkach'],['93.1204','z laską / kijkiem'],['93.1132','w leżeniu tyłem']],
+   f:[['93.3933','okolica barku'],['93.3939','okolica stawu'],['93.3929','przy nasilonym bólu']],
+   next:'Zgięcie bierne ≥ 120°, cechy zrostu w RTG.'},
+  {name:'Ruch czynny i wzmacnianie',time:'6–12 tyg.',goals:['Czynna elewacja ramienia','Siła stożka rotatorów i stabilizatorów łopatki','Funkcja nad głową'],
+   k:[['93.1202','czynne unoszenie ramienia'],['93.1304','taśmy elastyczne: rotatory, naramienny'],['93.3831','stabilizacja łopatki'],['93.1602','ślizgi stawu ramiennego przy ograniczeniu ruchu'],['93.3808','wzorce PNF kończyny górnej']],
+   f:[['93.3943','okolica stawu ramiennego'],['93.3912','obręcz barkowa, karkowo-barkowa']],
+   next:'Czynna elewacja ≥ 140°, samodzielność w samoobsłudze.'}
+ ]},
+
+{id:'vert-osteo',cat:'zach',name:'Osteoporotyczne złamanie kompresyjne kręgu',short:'Th/L, leczenie zachowawcze ± gorset',
+ lead:'Złamanie niskoenergetyczne trzonu kręgu u osoby z osteoporozą. Leczenie zachowawcze: kontrola bólu, wczesna pionizacja, ewentualnie orteza; przy uporczywym bólu rozważa się wertebroplastykę lub kyfoplastykę.',
+ icd10:[['M80.0','Osteoporoza pomenopauzalna z patologicznym złamaniem'],['S22.0','Złamanie kręgu piersiowego'],['S32.0','Złamanie kręgu lędźwiowego']],
+ proc:[],
+ facts:[['Pionizacja','wg tolerancji bólu, 1–3 dzień'],['Orteza','wg zaleceń lekarza'],['Okres bólowy','zwykle 6–12 tyg.']],
+ diag:['93.0104','93.0105','93.0101','93.07'],
+ alerts:['Deficyt neurologiczny, zaburzenia zwieraczy – pilna konsultacja','Unikać zgięcia tułowia z rotacją i dźwigania','Mobilizacje i manipulacje kręgosłupa (93.15) są przeciwwskazane','Wysokie ryzyko kolejnych złamań i upadków'],
+ ebm:'Ćwiczenia oporowe i równoważne zmniejszają ryzyko upadków u osób z osteoporozą. Konieczne leczenie farmakologiczne osteoporozy; rehabilitacja go nie zastępuje.',
+ phases:[
+  {name:'Okres ostry',time:'0–4 tyg.',goals:['Kontrola bólu','Bezpieczna pionizacja i chód','Profilaktyka powikłań unieruchomienia'],
+   k:[['93.2202','pionizacja przez bok, z ortezą jeśli zlecona'],['93.2402','chód z balkonikiem'],['93.1806','tor przeponowy i dolnożebrowy'],['93.1301','mięśnie przykręgosłupowe, brzucha, pośladkowe'],['93.1904','nauka wstawania z łóżka „en bloc”, ergonomia']],
+   f:[['93.3930','okolica bólowa przykręgosłupowo']],
+   next:'Ból spoczynkowy ≤ 3/10, samodzielny chód z pomocą.'},
+  {name:'Wzmacnianie prostowników',time:'4–12 tyg.',goals:['Siła prostowników grzbietu','Kontrola postawy','Równowaga'],
+   k:[['93.3831','ćwiczenia wyprostne, stabilizacja centralna'],['93.1304','progresywnie, bez zgięcia tułowia'],['93.1901','prewencja upadków'],['93.1909','ogólna wydolność']],
+   f:[['93.3929','przy bólu mięśniowym'],['93.3933','okolica złamania']],
+   next:'Swobodny chód bez pomocy lub z laską, test Up&Go < 14 s.'},
+  {name:'Program długoterminowy',time:'> 3 mies.',goals:['Trwała aktywność fizyczna','Ograniczenie ryzyka upadków'],
+   k:[['93.1910','grupy dla osób z osteoporozą'],['93.1901','trening równowagi, wzorce typu Otago'],['93.1304','trening oporowy 2–3× w tyg.'],['93.3103','ćwiczenia w wodzie']],
+   f:[],
+   next:'Kontynuacja samodzielna, edukacja.'}
+ ]},
+
+{id:'pelvis-zach',cat:'zach',name:'Stabilne złamanie miednicy',short:'gałęzie kości łonowej, osoby starsze',
+ lead:'Złamanie gałęzi kości łonowej i kulszowej z zachowaną stabilnością obręczy miednicznej, zwykle po upadku z wysokości własnej. Leczenie zachowawcze z obciążaniem wg tolerancji bólu.',
+ icd10:[['S32.5','Złamanie kości łonowej']],
+ proc:[],
+ facts:[['Obciążanie','wg tolerancji bólu'],['Pomoc ortopedyczna','balkonik → kule → laska'],['Powrót do funkcji','8–12 tyg.']],
+ diag:['93.0101','93.0105','93.0102','93.04'],
+ alerts:['Profilaktyka zakrzepicy żył głębokich i zapalenia płuc','Ryzyko majaczenia i utraty samodzielności u osób starszych','Diagnostyka osteoporozy'],
+ ebm:'Wczesne uruchomienie z obciążaniem wg tolerancji jest standardem w złamaniach stabilnych; długie leżenie zwiększa śmiertelność i ryzyko utraty samodzielności.',
+ phases:[
+  {name:'Wczesne uruchomienie',time:'0–2 tyg.',goals:['Pionizacja','Chód z balkonikiem','Profilaktyka przeciwzakrzepowa i oddechowa'],
+   k:[['93.2202','od 1–2 doby'],['93.2402','balkonik, obciążanie wg bólu'],['93.1202','ćwiczenia przeciwzakrzepowe stóp i kończyn'],['93.1301','mięśnie pośladkowe, czworogłowe'],['93.1806','oddechowe']],
+   f:[['93.3930','przeciwbólowo, okolica spojenia lub pachwiny']],
+   next:'Samodzielne przejścia łóżko–krzesło, chód 20 m.'},
+  {name:'Odbudowa siły i chodu',time:'2–8 tyg.',goals:['Siła odwodzicieli i prostowników biodra','Chód o kulach / lasce','Schody'],
+   k:[['93.1304','odwodziciele, prostowniki biodra, czworogłowy'],['93.2204','schody, przeszkody'],['93.1901','równowaga statyczna i dynamiczna'],['93.3101','po ustąpieniu ostrego bólu']],
+   f:[['93.3929','przy bólu'],['93.3933','okolica miednicy']],
+   next:'Chód z laską lub bez, TUG < 14 s.'},
+  {name:'Powrót do aktywności',time:'> 8 tyg.',goals:['Samodzielność','Prewencja upadków'],
+   k:[['93.1401','cykloergometr'],['93.1901','program przeciwupadkowy'],['93.1910','ćwiczenia grupowe']],
+   f:[],
+   next:'Kontynuacja aktywności w domu.'}
+ ]},
+
+/* ---------- ZWYRODNIENIA ---------- */
+{id:'koksartroza',cat:'zwyr',name:'Choroba zwyrodnieniowa stawu biodrowego',short:'koksartroza',
+ lead:'Przewlekła choroba z bólem pachwiny, sztywnością poranną i ograniczeniem rotacji wewnętrznej oraz zgięcia. Leczenie zachowawcze opiera się na ćwiczeniach, edukacji i redukcji masy ciała; w zaawansowanych stadiach – endoprotezoplastyka.',
+ icd10:[['M16','Koksartroza [choroba zwyrodnieniowa stawu biodrowego]']],
+ proc:[],
+ facts:[['Cykl usprawniania','zwykle 10–15 dni zabiegowych'],['Pomoc ortopedyczna','laska w ręce przeciwnej'],['Etap zaawansowany','kwalifikacja do endoprotezy']],
+ diag:['93.05','93.04','93.06','93.0101'],
+ alerts:['Diatermia (93.34) – przeciwwskazana przy metalowych implantach w okolicy zabiegu','Nagłe nasilenie bólu nocnego lub spoczynkowego – wykluczyć martwicę głowy, proces zapalny, nowotwór'],
+ ebm:'Wytyczne OARSI i NICE: ćwiczenia (wzmacniające, aerobowe, w wodzie), edukacja i redukcja masy ciała to leczenie pierwszego rzutu. Dla ultradźwięków, lasera i magnetoterapii dowody są niejednoznaczne; TENS można rozważyć jako dodatek przeciwbólowy.',
+ phases:[
+  {name:'Okres zaostrzenia',time:'1–2 tyg.',goals:['Zmniejszenie bólu','Utrzymanie zakresu ruchu','Odciążenie stawu'],
+   k:[['93.1205','w podwieszeniu (UGUL)'],['93.1101','zgięcie, odwiedzenie, rotacje bez bólu'],['93.1602','trakcja osiowa stawu biodrowego'],['93.2402','nauka chodu z laską w ręce przeciwnej']],
+   f:[['93.3951','okolica stawu'],['93.3930','przeciwbólowo'],['93.3933','okolica stawu biodrowego']],
+   next:'Ból spoczynkowy ustąpił, ból przy ruchu ≤ 4/10.'},
+  {name:'Poprawa funkcji',time:'2–6 tyg.',goals:['Zwiększenie zakresu ruchu','Siła odwodzicieli i prostowników','Rozciągnięcie przykurczów'],
+   k:[['93.1201','w odciążeniu z oporem'],['93.1304','odwodziciele, prostowniki biodra'],['93.27','zginacze biodra, przywodziciele'],['93.1912','przykurczone mięśnie okołostawowe'],['93.3818','mobilizacje torebki stawowej'],['93.1401','cykloergometr, bez oporu na początku'],['93.3101','ćwiczenia w odciążeniu wodą']],
+   f:[['93.3949','przed ćwiczeniami, poza zaostrzeniem'],['93.3953','w okresie przewlekłym'],['93.3929','przeciwbólowo'],['93.3401','okres przewlekły, przy braku implantów metalowych'],['93.3939','okolica stawu']],
+   next:'Poprawa w skali HOOS / WOMAC, chód bez utykania na dystansie 500 m.'},
+  {name:'Program samodzielny',time:'stale',goals:['Utrzymanie efektów','Redukcja masy ciała','Prehabilitacja przed ewentualną endoprotezą'],
+   k:[['93.1909','program domowy'],['93.1910','grupy dla osób z chorobą zwyrodnieniową'],['93.3103','pływanie, aqua-aerobik'],['93.1901','równowaga']],
+   f:[],
+   next:'Ocena co 6–12 mies.; przy narastających objawach – konsultacja ortopedyczna.'}
+ ]},
+
+{id:'gonartroza',cat:'zwyr',name:'Choroba zwyrodnieniowa stawu kolanowego',short:'gonartroza',
+ lead:'Najczęstsza postać choroby zwyrodnieniowej. Ból przy obciążaniu, schodach i wstawaniu, sztywność, osłabienie mięśnia czworogłowego. Leczenie pierwszego rzutu to ćwiczenia i edukacja.',
+ icd10:[['M17','Gonartroza [choroba zwyrodnieniowa stawu kolanowego]']],
+ proc:[],
+ facts:[['Cykl usprawniania','zwykle 10–15 dni zabiegowych'],['Kluczowy mięsień','czworogłowy uda'],['Etap zaawansowany','kwalifikacja do endoprotezy']],
+ diag:['93.05','93.04','93.0101','93.0105'],
+ alerts:['Wysięk, ucieplenie, zaczerwienienie – wykluczyć zapalenie (np. dna, infekcja) przed zabiegami cieplnymi','Diatermia (93.34) – przeciwwskazana przy metalowych implantach'],
+ ebm:'Wytyczne OARSI 2019 i ACR 2019: ćwiczenia wzmacniające, aerobowe i neuromięśniowe mają najsilniejsze rekomendacje. Krioterapia i TENS – możliwe jako dodatek przeciwbólowy. Ultradźwięki, laser, magnetoterapia – dowody niespójne.',
+ phases:[
+  {name:'Okres zaostrzenia',time:'1–2 tyg.',goals:['Zmniejszenie bólu i wysięku','Aktywacja czworogłowego','Pełny wyprost'],
+   k:[['93.1301','napinanie mięśnia czworogłowego w wyproście'],['93.1205','zgięcie i wyprost w podwieszeniu'],['93.1101','w zakresie bezbólowym'],['93.1602','mobilizacja rzepki']],
+   f:[['93.3951','okolica stawu, 2–3 min'],['93.3930','przeciwbólowo'],['93.3933','okolica stawu kolanowego']],
+   next:'Brak wysięku, pełny lub prawie pełny wyprost.'},
+  {name:'Wzmacnianie i propriocepcja',time:'2–6 tyg.',goals:['Siła czworogłowego i odwodzicieli biodra','Kontrola nerwowo-mięśniowa','Rozciągnięcie przykurczów'],
+   k:[['93.1304','zamknięty i otwarty łańcuch kinematyczny'],['93.1305','dynamometr izokinetyczny, jeśli dostępny'],['93.1401','cykloergometr'],['93.1901','podłoża niestabilne'],['93.27','mięśnie kulszowo-goleniowe, łydki'],['93.3812','odciążenie rzepki'],['93.3101','ćwiczenia w wodzie']],
+   f:[['93.3943','okolica szpary stawowej'],['93.3944','z żelem z NLPZ'],['93.3920','z lekiem przeciwbólowym'],['93.3939','punkty bólowe'],['93.3953','okres przewlekły']],
+   next:'Poprawa w KOOS / WOMAC, test 30 s wstawania z krzesła – wzrost liczby powtórzeń.'},
+  {name:'Program samodzielny',time:'stale',goals:['Utrzymanie siły i aktywności','Redukcja masy ciała'],
+   k:[['93.1909','program domowy 2–3× w tyg.'],['93.1910','zajęcia grupowe'],['93.3103','basen']],
+   f:[],
+   next:'Ocena co 6–12 mies.'}
+ ]},
+
+{id:'ledzwiowy',cat:'zwyr',name:'Zmiany zwyrodnieniowe kręgosłupa lędźwiowego',short:'spondyloza, dyskopatia, ból krzyża',
+ lead:'Ból okolicy lędźwiowo-krzyżowej związany ze zmianami zwyrodnieniowymi krążków i stawów międzykręgowych, z promieniowaniem do kończyny dolnej lub bez.',
+ icd10:[['M47.8','Inne zmiany zwyrodnieniowe kręgosłupa'],['M51.3','Inne określone zwyrodnienie krążka międzykręgowego'],['M54.5','Ból okolicy lędźwiowo-krzyżowej']],
+ proc:[],
+ facts:[['Cykl usprawniania','zwykle 10–15 dni zabiegowych'],['Postawa terapeutyczna','aktywność zamiast leżenia'],['Ocena','ruchomość, objawy korzeniowe']],
+ diag:['93.0104','93.05','93.04'],
+ alerts:['Czerwone flagi: zaburzenia zwieraczy, znieczulenie siodłowate, postępujący niedowład, gorączka, utrata masy ciała, nowotwór w wywiadzie, uraz – pilna diagnostyka','Mobilizacje i manipulacje przeciwwskazane przy niestabilności, osteoporozie, procesie nowotworowym'],
+ ebm:'NICE NG59: ćwiczenia, edukacja i terapia manualna jako część programu ćwiczeń. Wytyczne nie zalecają wyciągu, TENS, ultradźwięków ani prądów interferencyjnych w bólu krzyża. Zabiegi fizykalne warto ograniczyć do roli uzupełniającej.',
+ phases:[
+  {name:'Okres ostry',time:'0–2 tyg.',goals:['Zmniejszenie bólu','Utrzymanie aktywności','Edukacja'],
+   k:[['93.3831','ćwiczenia w kierunku preferowanym (np. wyprostne), pozycje odciążające'],['93.1902','ćwiczenia rozluźniające'],['93.1912','mięśnie przykręgosłupowe, gruszkowaty'],['93.15','mobilizacja segmentu lędźwiowego (brak czerwonych flag)']],
+   f:[['93.3930','przeciwbólowo'],['93.3937','rozluźnienie przed ćwiczeniami'],['93.3912','okolica lędźwiowa']],
+   next:'Centralizacja bólu, poprawa ruchomości.'},
+  {name:'Stabilizacja',time:'2–6 tyg.',goals:['Kontrola motoryczna tułowia','Siła mięśni głębokich','Ruchomość bioder'],
+   k:[['93.3831','stabilizacja centralna, kontrola motoryczna'],['93.3821','mobilizacje wg Maitlanda'],['93.27','zginacze biodra, kulszowo-goleniowe'],['93.1304','prostowniki grzbietu, pośladkowe'],['93.1909','ogólna sprawność'],['93.3101','ćwiczenia w wodzie']],
+   f:[['93.3929','przy bólu mięśniowym (dodatek)'],['93.3933','okolica lędźwiowa'],['93.3949','przed ćwiczeniami']],
+   next:'Poprawa w ODI / RMDQ, powrót do pracy.'},
+  {name:'Profilaktyka nawrotów',time:'> 6 tyg.',goals:['Ergonomia','Regularna aktywność'],
+   k:[['93.1910','szkoła pleców'],['93.1909','program domowy'],['93.3103','pływanie']],
+   f:[],
+   next:'Samodzielne ćwiczenia.'}
+ ]},
+
+{id:'szyjny',cat:'zwyr',name:'Zmiany zwyrodnieniowe kręgosłupa szyjnego',short:'spondyloza szyjna, ból szyi',
+ lead:'Ból karku z ograniczeniem ruchomości, często z bólami głowy i promieniowaniem do obręczy barkowej lub kończyny górnej.',
+ icd10:[['M47.8','Inne zmiany zwyrodnieniowe kręgosłupa'],['M50.3','Inne zwyrodnienie krążka międzykręgowego szyjnego'],['M54.2','Ból odcinka szyjnego kręgosłupa']],
+ proc:[],
+ facts:[['Cykl usprawniania','zwykle 10 dni zabiegowych'],['Kluczowe mięśnie','głębokie zginacze szyi, łopatkowe'],['Ocena','ruchomość, objawy korzeniowe i rdzeniowe']],
+ diag:['93.0104','93.05','93.04'],
+ alerts:['Mielopatia szyjna (niezgrabność rąk, zaburzenia chodu, objaw Lhermitte’a) – manipulacje przeciwwskazane, konsultacja neurochirurgiczna','Objawy niewydolności kręgowo-podstawnej (zawroty, podwójne widzenie, dyzartria) – przerwać terapię manualną','Niestabilność C1–C2 (np. RZS)'],
+ ebm:'Najlepsze dowody: ćwiczenia (zwłaszcza mięśni głębokich szyi i łopatki) połączone z terapią manualną. Laser niskoenergetyczny ma umiarkowane dowody krótkoterminowej skuteczności; pozostałe zabiegi fizykalne – słabe.',
+ phases:[
+  {name:'Okres bólowy',time:'0–2 tyg.',goals:['Zmniejszenie bólu i napięcia','Poprawa ruchomości'],
+   k:[['93.1501','mobilizacje segmentarne odcinka szyjnego'],['93.1912','mięsień czworoboczny, dźwigacz łopatki'],['93.1902','ćwiczenia rozluźniające obręczy barkowej']],
+   f:[['93.3939','punkty spustowe, okolica przykręgosłupowa'],['93.3937','przed ćwiczeniami'],['93.3912','okolica karkowo-barkowa'],['93.3930','przeciwbólowo']],
+   next:'Ból ≤ 3/10, poprawa rotacji.'},
+  {name:'Kontrola motoryczna',time:'2–6 tyg.',goals:['Wytrzymałość głębokich zginaczy szyi','Stabilizacja łopatki','Ergonomia'],
+   k:[['93.3831','trening głębokich zginaczy szyi (test CCFT)'],['93.3810','biofeedback ciśnieniowy (stabilizer)'],['93.1304','mięśnie łopatkowe'],['93.3821','mobilizacje wg Maitlanda'],['93.27','mięśnie piersiowe, pochyłe']],
+   f:[['93.3933','okolica szyjna'],['93.3949','przed ćwiczeniami']],
+   next:'Poprawa w NDI.'},
+  {name:'Profilaktyka',time:'> 6 tyg.',goals:['Ergonomia pracy','Ćwiczenia domowe'],
+   k:[['93.1909','program domowy'],['93.1910','zajęcia grupowe']],
+   f:[],
+   next:'Samodzielne ćwiczenia.'}
+ ]},
+
+{id:'omartroza',cat:'zwyr',name:'Choroba zwyrodnieniowa stawu ramiennego',short:'omartroza',
+ lead:'Ból i postępujące ograniczenie ruchomości barku, szczególnie rotacji zewnętrznej. Częściej u osób starszych, także jako artropatia po uszkodzeniu stożka rotatorów.',
+ icd10:[['M19.0','Pierwotna choroba zwyrodnieniowa innych stawów'],['M75.1','Zespół pierścienia rotatorów']],
+ proc:[],
+ facts:[['Cykl usprawniania','zwykle 10–15 dni zabiegowych'],['Kluczowe ograniczenie','rotacja zewnętrzna'],['Etap zaawansowany','kwalifikacja do endoprotezy']],
+ diag:['93.05','93.04','93.0102'],
+ alerts:['Diatermia (93.34) przeciwwskazana przy metalowych implantach','Nagła utrata czynnego unoszenia – wykluczyć rozerwanie stożka rotatorów'],
+ ebm:'Ćwiczenia zakresu ruchu i wzmacniające z mobilizacjami są podstawą; dowody dla zabiegów fizykalnych w omartrozie są skąpe.',
+ phases:[
+  {name:'Okres bólowy',time:'1–2 tyg.',goals:['Zmniejszenie bólu','Utrzymanie zakresu ruchu'],
+   k:[['93.1205','ćwiczenia wahadłowe'],['93.1131','bloczki'],['93.1101','rotacja zewnętrzna, zgięcie']],
+   f:[['93.3951','okolica barku'],['93.3930','przeciwbólowo'],['93.3933','okolica stawu']],
+   next:'Ból przy ruchu ≤ 4/10.'},
+  {name:'Mobilność i siła',time:'2–6 tyg.',goals:['Zwiększenie zakresu ruchu','Siła stożka rotatorów i łopatki'],
+   k:[['93.3818','ślizgi stawu ramiennego'],['93.1602','mobilizacja stawu ramiennego'],['93.27','tylna torebka, piersiowy mniejszy'],['93.1304','taśmy: rotatory, naramienny'],['93.3831','stabilizacja łopatki']],
+   f:[['93.3943','okolica stawu'],['93.3939','okolica stawu'],['93.3401','okres przewlekły, bez implantów']],
+   next:'Poprawa w SPADI / DASH.'},
+  {name:'Program samodzielny',time:'stale',goals:['Utrzymanie zakresu ruchu'],
+   k:[['93.1909','program domowy'],['93.3103','basen']],
+   f:[],
+   next:'Kontrola co 6–12 mies.'}
+ ]},
+
+{id:'rizartroza',cat:'zwyr',name:'Choroba zwyrodnieniowa stawu CMC kciuka',short:'rizartroza',
+ lead:'Ból u podstawy kciuka przy chwycie szczypcowym i otwieraniu słoików, z osłabieniem siły chwytu i w zaawansowaniu – przywiedzeniowym ustawieniem kciuka.',
+ icd10:[['M18','Choroba zwyrodnieniowa pierwszego stawu nadgarstkowo-śródręcznego']],
+ proc:[],
+ facts:[['Zaopatrzenie','orteza stawu CMC'],['Cykl usprawniania','zwykle 10 dni zabiegowych'],['Ocena','siła chwytu, ból w VAS']],
+ diag:['93.0103','93.05','93.02'],
+ alerts:['Orteza zwykle na noc i do czynności obciążających','Ostrożność z ciepłem w zaostrzeniu zapalnym'],
+ ebm:'Rekomendacje EULAR dla choroby zwyrodnieniowej rąk: edukacja w zakresie ochrony stawów, ćwiczenia i ortezowanie stawu CMC kciuka. Zabiegi cieplne mogą ułatwiać ćwiczenia.',
+ phases:[
+  {name:'Okres bólowy',time:'1–2 tyg.',goals:['Zmniejszenie bólu','Dobór ortezy','Edukacja ochrony stawów'],
+   k:[['93.2401','nauka zakładania i użytkowania ortezy'],['93.1202','ruchy kciuka w zakresie bezbólowym']],
+   f:[['93.3940','punkty bólowe stawu CMC'],['93.3920','z lekiem przeciwbólowym']],
+   next:'Zmniejszenie bólu przy chwycie.'},
+  {name:'Stabilizacja i siła',time:'2–6 tyg.',goals:['Siła mięśni stabilizujących kciuk','Sprawność manualna'],
+   k:[['93.1301','pierwszy międzykostny grzbietowy, odwodziciel długi kciuka'],['93.1903','chwyty precyzyjne'],['93.1601','mobilizacja stawu CMC, poszerzenie I przestrzeni międzypalcowej'],['93.3812','stabilizacja kciuka']],
+   f:[['93.3945','przed ćwiczeniami'],['93.3943','okolica stawu CMC'],['93.3301','przed ćwiczeniami']],
+   next:'Poprawa siły chwytu kluczowego.'}
+ ]},
+
+/* ---------- ENDOPROTEZY ---------- */
+{id:'tep-biodro',cat:'endo',name:'Całkowita endoprotezoplastyka stawu biodrowego',short:'TEP biodra',
+ lead:'Wymiana stawu biodrowego, najczęściej z powodu koksartrozy. Obciążanie i zasady ochrony stawu zależą od rodzaju protezy (cementowa / bezcementowa) i dostępu operacyjnego – decyduje operator.',
+ icd10:[['M16','Koksartroza'],['Z96.6','Obecność implantów ortopedycznych stawów']],
+ proc:['81.51'],
+ facts:[['Pionizacja','doba 0–1'],['Obciążanie','zwykle wg tolerancji (wg operatora)'],['Kule','ok. 4–6 tyg.'],['Zasady ochrony','do ok. 6–12 tyg.']],
+ diag:['93.05','93.04','93.06','93.0101','93.0102'],
+ alerts:['Dostęp tylny: unikać zgięcia > 90°, przywiedzenia poza linię środkową i rotacji wewnętrznej','Dostęp przedni: unikać przeprostu z rotacją zewnętrzną','Objawy zwichnięcia: nagły ból, skrócenie i rotacja kończyny – pilnie do lekarza','Diatermia (93.34) przeciwwskazana; ultradźwięków (93.3943) nad endoprotezą zwykle się nie stosuje','ZŻG, infekcja rany, krwiak'],
+ ebm:'Wczesna mobilizacja w dniu operacji lub dobie 1 skraca hospitalizację. Progresywne ćwiczenia wzmacniające po wypisie poprawiają siłę i chód. Zabiegi fizykalne mają tu rolę pomocniczą (ból, obrzęk).',
+ phases:[
+  {name:'Prehabilitacja',time:'przed operacją',goals:['Edukacja: zasady ochrony, przebieg rehabilitacji','Nauka chodu o kulach','Wzmocnienie mięśni'],
+   k:[['93.2402','nauka chodu o kulach przed zabiegiem'],['93.1304','odwodziciele, czworogłowy, kończyny górne'],['93.1806','ćwiczenia oddechowe'],['93.1904','nauka bezpiecznych przejść']],
+   f:[],
+   next:'Operacja.'},
+  {name:'Okres szpitalny',time:'1–7 dzień',goals:['Pionizacja i chód o kulach / balkoniku','Profilaktyka zakrzepowa i oddechowa','Samodzielność w przejściach'],
+   k:[['93.1806','ćwiczenia oddechowe'],['93.1202','ćwiczenia przeciwzakrzepowe stóp'],['93.1301','pośladkowe, czworogłowy'],['93.1132','zgięcie i odwiedzenie biodra w zakresie dozwolonym'],['93.2202','doba 0–1'],['93.2203','stanie, przenoszenie ciężaru'],['93.2402','chód o kulach / balkoniku, schody'],['93.1904','siadanie, toaleta, ubieranie z zachowaniem zasad']],
+   f:[['93.3998','okolica operowana, obrzęk i ból'],['93.3930','przeciwbólowo, z dala od rany']],
+   next:'Samodzielny chód o kulach i schody, wypis.'},
+  {name:'Wczesna rehabilitacja',time:'2–6 tyg.',goals:['Poprawa zakresu ruchu w granicach zasad ochrony','Siła odwodzicieli','Poprawa wzorca chodu'],
+   k:[['93.1205','w podwieszeniu (UGUL)'],['93.1201','w odciążeniu z oporem'],['93.1304','progresywnie: odwodziciele, prostowniki'],['93.1401','cykloergometr, wysokie siodełko (od ok. 3–4 tyg.)'],['93.1901','przenoszenie ciężaru, równowaga'],['93.2204','schody, chód po terenie']],
+   f:[['93.3986','obrzęk kończyny'],['93.3998','po ćwiczeniach'],['93.3933','okolica biodra (stosowana zwyczajowo)'],['93.3939','okolica blizny']],
+   next:'Chód z jedną kulą bez utykania, odwiedzenie czynne w leżeniu bokiem.'},
+  {name:'Okres późny',time:'6–12 tyg.',goals:['Chód bez pomocy','Pełna siła i wytrzymałość','Powrót do aktywności'],
+   k:[['93.1304','trening oporowy, zamknięty łańcuch'],['93.3101','po wygojeniu rany'],['93.3808','wzorce kończyny dolnej'],['93.1901','podłoża niestabilne'],['93.1910','ćwiczenia grupowe']],
+   f:[['93.3929','przy bólu mięśniowym']],
+   next:'Rekreacja: rower, pływanie, nordic walking. Unikać sportów kontaktowych i skoków.'}
+ ]},
+
+{id:'hemi-biodro',cat:'endo',name:'Endoproteza połowicza po złamaniu szyjki kości udowej',short:'hemiartroplastyka',
+ lead:'Typowe leczenie przemieszczonego złamania szyjki kości udowej u osób starszych. Pacjent zwykle obciąża kończynę wg tolerancji. Rehabilitacja ma charakter ortogeriatryczny.',
+ icd10:[['S72.0','Złamanie szyjki kości udowej'],['Z96.6','Obecność implantów ortopedycznych stawów']],
+ proc:['81.52'],
+ facts:[['Pionizacja','doba 1'],['Obciążanie','zwykle pełne wg tolerancji'],['Pomoc ortopedyczna','balkonik → kule / laska'],['Cel','powrót do poziomu sprzed urazu']],
+ diag:['93.0101','93.0105','93.0102','93.04'],
+ alerts:['Zasady ochrony stawu jak po TEP (wg dostępu)','Majaczenie pooperacyjne, odwodnienie, niedożywienie','Profilaktyka upadków i leczenie osteoporozy','Diatermia (93.34) przeciwwskazana'],
+ ebm:'Wczesne uruchomienie (doba 1) i obciążanie wg tolerancji poprawiają przeżycie i powrót do samodzielności. Trening równowagi i siły po wypisie zmniejsza ryzyko kolejnych upadków.',
+ phases:[
+  {name:'Okres szpitalny',time:'1–10 dzień',goals:['Pionizacja i chód z balkonikiem','Samodzielne przejścia','Profilaktyka powikłań'],
+   k:[['93.1806','ćwiczenia oddechowe'],['93.1202','ćwiczenia przeciwzakrzepowe'],['93.1301','pośladkowe, czworogłowy'],['93.2202','doba 1'],['93.2402','balkonik'],['93.1904','przejścia, toaleta']],
+   f:[['93.3998','obrzęk, ból']],
+   next:'Chód z balkonikiem 20–50 m, bezpieczne przejścia.'},
+  {name:'Okres poszpitalny',time:'2–8 tyg.',goals:['Siła kończyn dolnych','Chód z kulami / laską','Równowaga'],
+   k:[['93.1304','odwodziciele, prostowniki biodra, czworogłowy'],['93.1901','równowaga statyczna i dynamiczna'],['93.2204','schody, wstawanie z krzesła'],['93.1909','ogólna sprawność']],
+   f:[['93.3986','obrzęk kończyny'],['93.3930','przeciwbólowo']],
+   next:'TUG < 20 s, chód z laską.'},
+  {name:'Prewencja upadków',time:'> 8 tyg.',goals:['Samodzielność','Ograniczenie ryzyka kolejnego złamania'],
+   k:[['93.1901','program przeciwupadkowy'],['93.1910','grupy seniorów'],['93.1401','cykloergometr']],
+   f:[],
+   next:'Kontynuacja aktywności, ocena ryzyka upadków.'}
+ ]},
+
+{id:'tka',cat:'endo',name:'Całkowita endoprotezoplastyka stawu kolanowego',short:'TKA',
+ lead:'Wymiana stawu kolanowego z powodu zaawansowanej gonartrozy. Główne cele: pełny wyprost, zgięcie ≥ 90° na wczesnym etapie i ≥ 110° w okresie późnym, odbudowa siły czworogłowego.',
+ icd10:[['M17','Gonartroza'],['Z96.6','Obecność implantów ortopedycznych stawów']],
+ proc:['81.54'],
+ facts:[['Pionizacja','doba 0–1'],['Obciążanie','zwykle wg tolerancji'],['Cel zgięcia','≥ 90° w 2 tyg., ≥ 110° w 12 tyg.'],['Kule','ok. 4–6 tyg.']],
+ diag:['93.05','93.04','93.07','93.0101'],
+ alerts:['Zgięcie < 90° w 6 tyg. – zgłosić operatorowi (ryzyko artrofibrozy)','ZŻG, infekcja, sączenie z rany','Diatermia (93.34) przeciwwskazana'],
+ ebm:'Szyna CPM nie daje klinicznie istotnej poprawy zakresu ruchu w porównaniu z ćwiczeniami (przegląd Cochrane). Elektrostymulacja czworogłowego może przyspieszyć odbudowę siły. Krioterapia zmniejsza ból w pierwszych dniach.',
+ phases:[
+  {name:'Prehabilitacja',time:'przed operacją',goals:['Edukacja','Siła czworogłowego','Nauka chodu o kulach'],
+   k:[['93.1301','czworogłowy'],['93.1304','kończyny dolne i górne'],['93.2402','nauka chodu o kulach']],
+   f:[],
+   next:'Operacja.'},
+  {name:'Okres szpitalny',time:'1–5 dzień',goals:['Pełny wyprost','Zgięcie ≥ 90°','Chód o kulach'],
+   k:[['93.1301','napinanie czworogłowego, unoszenie wyprostowanej kończyny'],['93.1101','zgięcie i wyprost kolana'],['93.1104','szyna CPM (opcjonalnie)'],['93.1132','zgięcie w siadzie'],['93.2202','doba 0–1'],['93.2402','chód o kulach, schody']],
+   f:[['93.3998','obrzęk i ból'],['93.3988','czworogłowy uda'],['93.3930','przeciwbólowo']],
+   next:'Wyprost 0–5°, zgięcie ≥ 80–90°, samodzielny chód o kulach.'},
+  {name:'Wczesna rehabilitacja',time:'2–6 tyg.',goals:['Zgięcie ≥ 110°','Kontrola obrzęku','Normalizacja chodu'],
+   k:[['93.1106','redresja zgięcia i wyprostu'],['93.1602','mobilizacja rzepki i stawu udowo-piszczelowego'],['93.1401','cykloergometr (gdy zgięcie ok. 100°)'],['93.1304','zamknięty łańcuch, mini-przysiady'],['93.1901','propriocepcja'],['93.2204','schody naprzemiennie']],
+   f:[['93.3986','obrzęk kończyny'],['93.3998','po ćwiczeniach'],['93.3988','czworogłowy uda'],['93.3939','blizna, okolica stawu']],
+   next:'Zgięcie ≥ 110°, chód bez kul lub z jedną kulą.'},
+  {name:'Okres późny',time:'6–12 tyg.',goals:['Siła i wytrzymałość','Powrót do aktywności'],
+   k:[['93.1305','trening izokinetyczny'],['93.1304','progresja oporu'],['93.3101','po wygojeniu rany'],['93.3808','wzorce kończyny dolnej'],['93.1912','przykurcz kulszowo-goleniowych']],
+   f:[['93.3929','ból mięśniowy']],
+   next:'Rekreacja o niskim obciążeniu stawu.'}
+ ]},
+
+{id:'tsa',cat:'endo',name:'Endoprotezoplastyka stawu ramiennego',short:'anatomiczna lub odwrócona',
+ lead:'Endoproteza anatomiczna (przy zachowanym stożku rotatorów) lub odwrócona (artropatia z uszkodzenia stożka, złamania wieloodłamowe u osób starszych). Ograniczenia ruchu różnią się zależnie od typu protezy.',
+ icd10:[['M19.0','Pierwotna choroba zwyrodnieniowa innych stawów'],['M75.1','Zespół pierścienia rotatorów'],['S42.2','Złamanie górnego końca kości ramiennej'],['Z96.6','Obecność implantów ortopedycznych stawów']],
+ proc:['81.80','81.81'],
+ facts:[['Temblak / orteza','4–6 tyg.'],['Ruch czynny','od ok. 6 tyg.'],['Wzmacnianie','od ok. 12 tyg.']],
+ diag:['93.05','93.04','93.0102'],
+ alerts:['Proteza odwrócona: unikać łączenia wyprostu, przywiedzenia i rotacji wewnętrznej (ręka za plecy) – ryzyko zwichnięcia','Proteza anatomiczna: ochrona szwu mięśnia podłopatkowego – ograniczona rotacja zewnętrzna bierna, bez czynnej rotacji wewnętrznej z oporem przez ok. 6 tyg.','Diatermia (93.34) przeciwwskazana'],
+ ebm:'Protokoły różnią się między ośrodkami; obowiązują ograniczenia ustalone przez operatora. Po protezie odwróconej elewacja ramienia jest zwykle mniejsza niż fizjologiczna, a rotacje – ograniczone.',
+ phases:[
+  {name:'Ochrona',time:'0–6 tyg.',goals:['Gojenie tkanek','Ruch bierny w bezpiecznym zakresie','Ruchomość łokcia i ręki'],
+   k:[['93.1101','zgięcie w płaszczyźnie łopatki do ok. 90°, rotacja zewnętrzna w limicie operatora'],['93.1205','ćwiczenia wahadłowe'],['93.1202','łokieć, nadgarstek, palce'],['93.1301','napięcia mięśni łopatki']],
+   f:[['93.3998','okolica barku'],['93.3930','przeciwbólowo']],
+   next:'Gojenie rany, zgoda operatora na ruch czynny.'},
+  {name:'Ruch czynny',time:'6–12 tyg.',goals:['Czynna elewacja','Kontrola łopatki','Proteza odwrócona: aktywacja mięśnia naramiennego'],
+   k:[['93.1132','w leżeniu, potem w siadzie'],['93.1131','bloczki'],['93.1202','unoszenie ramienia'],['93.3831','stabilizacja łopatki, trening naramiennego']],
+   f:[['93.3933','okolica barku'],['93.3939','blizna']],
+   next:'Czynne unoszenie do poziomu barku bez kompensacji.'},
+  {name:'Wzmacnianie',time:'> 12 tyg.',goals:['Siła i funkcja','Samodzielność w samoobsłudze'],
+   k:[['93.1304','taśmy, lekkie obciążenia'],['93.3808','wzorce PNF'],['93.1904','czynności dnia codziennego']],
+   f:[],
+   next:'Ćwiczenia domowe; bez podnoszenia ciężarów powyżej kilku kg.'}
+ ]},
+
+/* ---------- OSTEOSYNTEZY ---------- */
+{id:'pertroch',cat:'osteo',name:'Złamanie przezkrętarzowe – zespolenie gwoździem lub DHS',short:'PFNA / gamma / DHS',
+ lead:'Złamanie bliższego końca kości udowej u osób starszych, zespalane gwoździem śródszpikowym lub śrubą dynamiczną. Zwykle pełne obciążanie wg tolerancji od pierwszej doby.',
+ icd10:[['S72.1','Złamanie przezkrętarzowe']],
+ proc:['79.15','79.35'],
+ facts:[['Pionizacja','doba 1'],['Obciążanie','zwykle wg tolerancji (wg operatora)'],['Pomoc ortopedyczna','balkonik → kule'],['Zrost','ok. 12 tyg.']],
+ diag:['93.0101','93.0105','93.0102','93.06'],
+ alerts:['Brak ograniczeń ruchu typowych dla endoprotezy, chyba że operator zaleci inaczej','Ból w okolicy krętarza – możliwy konflikt z implantem','Majaczenie, ZŻG, odleżyny','Diatermia (93.34) przeciwwskazana nad metalem'],
+ ebm:'Natychmiastowe obciążanie wg tolerancji po stabilnym zespoleniu jest bezpieczne i poprawia wyniki funkcjonalne u osób starszych.',
+ phases:[
+  {name:'Okres szpitalny',time:'1–10 dzień',goals:['Pionizacja','Chód z balkonikiem','Samodzielne przejścia'],
+   k:[['93.1806','ćwiczenia oddechowe'],['93.1202','ćwiczenia przeciwzakrzepowe'],['93.1301','pośladkowe, czworogłowy'],['93.1132','zgięcie i odwiedzenie biodra'],['93.2202','doba 1'],['93.2402','balkonik'],['93.1904','przejścia']],
+   f:[['93.3998','okolica operowana']],
+   next:'Chód z balkonikiem, bezpieczne przejścia.'},
+  {name:'Odbudowa siły',time:'2–8 tyg.',goals:['Siła odwodzicieli','Chód o kulach','Równowaga'],
+   k:[['93.1304','odwodziciele, prostowniki'],['93.1205','w podwieszeniu'],['93.1901','równowaga'],['93.2204','schody']],
+   f:[['93.3933','okolica złamania'],['93.3986','obrzęk kończyny'],['93.3930','przeciwbólowo']],
+   next:'Chód z laską, TUG < 20 s.'},
+  {name:'Prewencja upadków',time:'> 8 tyg.',goals:['Samodzielność','Ograniczenie ryzyka kolejnych złamań'],
+   k:[['93.1901','program przeciwupadkowy'],['93.1909','ćwiczenia ogólnousprawniające'],['93.1401','cykloergometr']],
+   f:[],
+   next:'Leczenie osteoporozy, kontynuacja aktywności.'}
+ ]},
+
+{id:'radius-orif',cat:'osteo',name:'Złamanie dalszej nasady kości promieniowej – płyta dłoniowa',short:'ORIF, płyta kątowo-stabilna',
+ lead:'Stabilne zespolenie płytą dłoniową pozwala zwykle na wczesny ruch nadgarstka, co skraca okres usprawniania w porównaniu z leczeniem gipsem.',
+ icd10:[['S52.5','Złamanie dolnego końca kości promieniowej']],
+ proc:['79.32'],
+ facts:[['Orteza','2–6 tyg. (wg operatora)'],['Ruch nadgarstka','zwykle od 1–2 tyg.'],['Obciążanie ręki','od ok. 6–8 tyg.']],
+ diag:['93.05','93.04','93.0103'],
+ alerts:['Podrażnienie lub zerwanie ścięgien (prostownik długi kciuka, zginacze) – nagła utrata ruchu kciuka lub palca','Zespół cieśni nadgarstka, CRPS','Diatermia (93.34) przeciwwskazana nad płytą'],
+ ebm:'Wczesny ruch po stabilnej osteosyntezie poprawia zakres ruchu w pierwszych tygodniach; wyniki odległe są podobne. Program ćwiczeń domowych jest kluczowy.',
+ phases:[
+  {name:'Wczesny okres pooperacyjny',time:'0–2 tyg.',goals:['Kontrola obrzęku','Ruchomość palców, łokcia, barku','Wczesny ruch nadgarstka (jeśli zalecony)'],
+   k:[['93.1202','palce (pełna pięść), łokieć, bark'],['93.1205','delikatne zgięcie/wyprost nadgarstka bez ortezy'],['93.1903','lekkie chwyty']],
+   f:[['93.3998','obrzęk, przez opatrunek'],['93.3933','okolica nadgarstka']],
+   next:'Wygojenie rany, zdjęcie szwów.'},
+  {name:'Mobilizacja',time:'2–6 tyg.',goals:['Zakres ruchu nadgarstka i przedramienia','Ruchoma blizna'],
+   k:[['93.1101','zgięcie/wyprost, odchylenia'],['93.1132','supinacja, pronacja'],['93.3818','ślizgi stawowe'],['93.1903','sprawność manualna']],
+   f:[['93.3301','po wygojeniu rany'],['93.3918','mobilizacja blizny'],['93.3986','obrzęk ręki'],['93.3939','okolica stawu']],
+   next:'Zakres ruchu ≥ 60% strony zdrowej.'},
+  {name:'Wzmacnianie',time:'6–12 tyg.',goals:['Siła chwytu','Powrót do pracy'],
+   k:[['93.1304','zginacze i prostowniki nadgarstka'],['93.1402','przyrządy do ćwiczeń ręki'],['93.1106','przy ograniczeniu supinacji lub wyprostu'],['93.1904','trening czynności']],
+   f:[['93.3945','przed ćwiczeniami']],
+   next:'Siła chwytu ≥ 80% strony zdrowej.'}
+ ]},
+
+{id:'ankle-orif',cat:'osteo',name:'Złamanie kostek – zespolenie płytą i śrubami',short:'Weber B / C, ORIF',
+ lead:'Złamanie jedno-, dwu- lub trójkostkowe zespolone operacyjnie. Okres odciążania zależy od typu złamania, stabilności zespolenia i stanu kości – decyduje operator.',
+ icd10:[['S82.5','Złamanie kostki przyśrodkowej'],['S82.6','Złamanie kostki bocznej'],['S82.8','Złamania innych części podudzia']],
+ proc:['79.36'],
+ facts:[['Odciążanie','często 6 tyg. (wg operatora)'],['Orteza','but ortopedyczny / gips'],['Pełne obciążanie','zwykle 8–12 tyg.']],
+ diag:['93.05','93.04','93.0101','93.0105'],
+ alerts:['Śruba stawu piszczelowo-strzałkowego (syndesmozy) – ograniczenia wg operatora','Obrzęk, ZŻG, infekcja rany','Diatermia (93.34) przeciwwskazana nad metalem'],
+ ebm:'Wczesny ruch w stawie skokowym po stabilnej osteosyntezie poprawia wczesną funkcję. Ćwiczenia z progresją obciążania i trening propriocepcji są podstawą późniejszego okresu.',
+ phases:[
+  {name:'Odciążanie',time:'0–2 tyg.',goals:['Kontrola obrzęku','Chód o kulach bez obciążania','Utrzymanie siły kończyny'],
+   k:[['93.2402','chód o kulach bez obciążania lub z odciążeniem'],['93.1202','palce stopy, kolano, biodro'],['93.1301','czworogłowy, pośladkowe'],['93.1806','ćwiczenia oddechowe']],
+   f:[['93.3998','okolica stawu skokowego, przy ortezie zdjętej']],
+   next:'Wygojenie rany.'},
+  {name:'Ruch bez obciążania',time:'2–6 tyg.',goals:['Zakres ruchu stawu skokowego','Kontrola obrzęku'],
+   k:[['93.1202','zgięcie grzbietowe i podeszwowe (jeśli dozwolone)'],['93.1101','staw skokowy górny'],['93.3818','ślizgi stawu skokowego'],['93.1304','biodro, kolano'],['93.2402','z obciążaniem wg zaleceń']],
+   f:[['93.3986','obrzęk stopy i podudzia'],['93.3933','okolica złamania'],['93.3302','po wygojeniu rany'],['93.3939','okolica stawu']],
+   next:'Zrost w RTG, zgoda na obciążanie.'},
+  {name:'Obciążanie i propriocepcja',time:'6–12 tyg.',goals:['Pełne obciążanie','Normalny chód','Równowaga i siła łydki'],
+   k:[['93.2204','przejście od kul do chodu bez pomocy'],['93.1901','podłoża niestabilne'],['93.1304','wspięcia na palce, mięśnie strzałkowe'],['93.1106','zgięcie grzbietowe'],['93.27','mięsień trójgłowy łydki'],['93.1401','cykloergometr']],
+   f:[['93.3943','małe dawki, nad zespoleniem metalowym ostrożnie'],['93.3986','obrzęk po wysiłku']],
+   next:'Chód bez utykania, wspięcie na palce na jednej nodze.'}
+ ]},
+
+{id:'tibia-nail',cat:'osteo',name:'Złamanie trzonu kości piszczelowej – gwóźdź śródszpikowy',short:'zespolenie śródszpikowe',
+ lead:'Zespolenie gwoździem ryglowanym. W wielu złamaniach dopuszcza się wczesne obciążanie, zakres ustala operator zależnie od typu złamania.',
+ icd10:[['S82.2','Złamanie trzonu kości piszczelowej']],
+ proc:['79.16','79.36'],
+ facts:[['Obciążanie','często wg tolerancji (wg operatora)'],['Kule','6–12 tyg.'],['Zrost','4–6 mies.']],
+ diag:['93.05','93.04','93.06','93.0101'],
+ alerts:['Zespół ciasnoty przedziałów powięziowych w pierwszych dobach: narastający ból, ból przy biernym rozciąganiu palców – pilnie do lekarza','Przedni ból kolana (miejsce wprowadzenia gwoździa)','Opóźniony zrost lub brak zrostu','Diatermia (93.34) przeciwwskazana'],
+ ebm:'Wczesne obciążanie po zespoleniu śródszpikowym jest zwykle bezpieczne i nie zwiększa ryzyka powikłań; przyspiesza powrót do funkcji.',
+ phases:[
+  {name:'Wczesny okres',time:'0–2 tyg.',goals:['Kontrola obrzęku','Chód o kulach','Pełny wyprost kolana'],
+   k:[['93.2402','chód o kulach z obciążaniem wg zaleceń'],['93.1202','staw skokowy, palce, kolano'],['93.1301','czworogłowy'],['93.1101','kolano i staw skokowy']],
+   f:[['93.3998','obrzęk podudzia']],
+   next:'Wygojenie ran.'},
+  {name:'Progresja obciążenia',time:'2–8 tyg.',goals:['Zakres ruchu kolana i stawu skokowego','Siła kończyny','Zwiększanie obciążenia'],
+   k:[['93.1304','kończyna dolna'],['93.1401','cykloergometr'],['93.1901','przenoszenie ciężaru'],['93.27','trójgłowy łydki']],
+   f:[['93.3933','okolica złamania'],['93.3986','obrzęk']],
+   next:'Kostna kostnina w RTG, pełne obciążanie.'},
+  {name:'Powrót do aktywności',time:'> 8 tyg.',goals:['Chód bez pomocy','Siła i wytrzymałość'],
+   k:[['93.2204','chód bez kul'],['93.1304','progresja oporu'],['93.1901','propriocepcja'],['93.3101','ćwiczenia w wodzie']],
+   f:[],
+   next:'Powrót do pracy i sportu po potwierdzeniu zrostu.'}
+ ]},
+
+{id:'patella',cat:'osteo',name:'Złamanie rzepki – zespolenie',short:'pętla Webera / śruby',
+ lead:'Złamanie rzepki z przemieszczeniem leczone zespoleniem na pętlę Webera lub śrubami. Obciążanie zwykle pełne w ortezie zablokowanej w wyproście, zakres zgięcia zwiększany etapami.',
+ icd10:[['S82.0','Złamanie rzepki']],
+ proc:['79.394'],
+ facts:[['Orteza','w wyproście 6 tyg.'],['Zgięcie','0–30° → 0–60° → 0–90° (wg operatora)'],['Czynny wyprost z oporem','od ok. 6–8 tyg.']],
+ diag:['93.05','93.04','93.0101'],
+ alerts:['Bez czynnego wyprostu przeciw oporowi i bez obciążania w zgięciu do ok. 6 tyg.','Utrata wyprostu czynnego – podejrzenie niewydolności zespolenia','Diatermia (93.34) przeciwwskazana'],
+ ebm:'Typowy schemat: 0–30° w tyg. 0–2, 0–60° w tyg. 3–4, 0–90° w tyg. 5–6. Ostateczne limity ustala operator.',
+ phases:[
+  {name:'Ochrona zespolenia',time:'0–2 tyg.',goals:['Kontrola obrzęku','Zgięcie do 30°','Chód w ortezie'],
+   k:[['93.1301','czworogłowy w wyproście'],['93.1101','zgięcie do 30°'],['93.2402','w ortezie w wyproście, obciążanie wg tolerancji'],['93.1202','staw skokowy, biodro']],
+   f:[['93.3998','okolica kolana']],
+   next:'Wygojenie rany.'},
+  {name:'Stopniowe zgięcie',time:'2–6 tyg.',goals:['Zgięcie do 60°, następnie 90°','Mobilność rzepki'],
+   k:[['93.1101','zgięcie wg etapów'],['93.1132','zgięcie w siadzie'],['93.1602','mobilizacja rzepki (delikatnie)'],['93.1304','biodro, łydka']],
+   f:[['93.3933','okolica złamania'],['93.3986','obrzęk'],['93.3988','czworogłowy (izometrycznie)']],
+   next:'Zgięcie 90°, zrost w RTG, zdjęcie ortezy.'},
+  {name:'Wzmacnianie',time:'6–12 tyg.',goals:['Siła czworogłowego','Chód bez ortezy','Schody'],
+   k:[['93.1304','zamknięty łańcuch, mini-przysiady'],['93.1401','cykloergometr'],['93.1106','zgięcie > 90°'],['93.1901','propriocepcja'],['93.2204','schody']],
+   f:[['93.3929','ból mięśniowy']],
+   next:'Pełny zakres ruchu, siła ≥ 80% strony zdrowej.'}
+ ]},
+
+{id:'humerus-orif',cat:'osteo',name:'Złamanie bliższej nasady kości ramiennej – płyta',short:'ORIF, płyta kątowo-stabilna',
+ lead:'Zespolenie płytą kątowo-stabilną złamań przemieszczonych. Stabilna osteosynteza pozwala na wczesny ruch bierny, czynny ruch od ok. 6 tygodni.',
+ icd10:[['S42.2','Złamanie górnego końca kości ramiennej']],
+ proc:['79.31'],
+ facts:[['Temblak','2–4 tyg.'],['Ruch bierny','od pierwszych dni'],['Ruch czynny','od ok. 6 tyg.']],
+ diag:['93.05','93.04','93.0102'],
+ alerts:['Wtórne przemieszczenie, przebicie śrub do stawu – ból i trzeszczenia','Martwica głowy kości ramiennej (późne powikłanie)','Nerw pachowy','Diatermia (93.34) przeciwwskazana nad metalem'],
+ ebm:'Wczesny ruch bierny po stabilnym zespoleniu zmniejsza sztywność; czynne wzmacnianie po potwierdzeniu zrostu.',
+ phases:[
+  {name:'Ruch bierny',time:'0–6 tyg.',goals:['Kontrola bólu','Zgięcie bierne do 90–120°','Ruchomość łokcia i ręki'],
+   k:[['93.1205','ćwiczenia wahadłowe'],['93.1101','zgięcie, odwiedzenie w płaszczyźnie łopatki, rotacje'],['93.1202','łokieć, nadgarstek, palce'],['93.1301','napięcia mięśni łopatki']],
+   f:[['93.3998','okolica barku'],['93.3930','przeciwbólowo'],['93.3933','okolica złamania']],
+   next:'Zrost w RTG, zgoda na ruch czynny.'},
+  {name:'Ruch czynny',time:'6–12 tyg.',goals:['Czynna elewacja','Kontrola łopatki'],
+   k:[['93.1132','ćwiczenia wspomagane'],['93.1131','bloczki'],['93.1202','unoszenie ramienia'],['93.3831','stabilizacja łopatki'],['93.1602','ślizgi stawu ramiennego']],
+   f:[['93.3939','blizna, okolica stawu'],['93.3912','obręcz barkowa']],
+   next:'Czynne zgięcie ≥ 120°.'},
+  {name:'Wzmacnianie',time:'> 12 tyg.',goals:['Siła stożka rotatorów','Funkcja nad głową'],
+   k:[['93.1304','taśmy, hantle'],['93.3808','wzorce PNF'],['93.1904','czynności dnia codziennego']],
+   f:[],
+   next:'Powrót do pracy wg obciążenia zawodowego.'}
+ ]}
+];
+
+/* ===== Stan i renderowanie ===== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let view = 'cat', current = C[0].id, filter = 'all', query = '';
+const ROMAN = ['0','I','II','III','IV','V'];
+
+function nameOf(code){ return D[code] ? D[code][0] : '(kod spoza słownika strony)'; }
+
+function matches(c,q){
+  if(!q) return true;
+  q = q.toLowerCase();
+  const hay = [c.name,c.short,c.lead,...c.icd10.flat(),...c.proc,...c.proc.map(nameOf),
+    ...c.phases.flatMap(p=>[...p.k,...p.f].flatMap(x=>[x[0],nameOf(x[0])]))].join(' ').toLowerCase();
+  return hay.includes(q);
+}
+
+function renderChips(){
+  const opts = [['all','Wszystkie'],...CATS.map(c=>[c[0],c[1].split(' –')[0].replace('Stan po ','Po ')])];
+  $('#chips').innerHTML = opts.map(o=>`<button class="chip" data-f="${o[0]}" aria-pressed="${filter===o[0]}">${esc(o[1])}</button>`).join('');
+}
+
+function renderList(){
+  const html = CATS.filter(cat=>filter==='all'||filter===cat[0]).map(cat=>{
+    const items = C.filter(c=>c.cat===cat[0]&&matches(c,query));
+    if(!items.length) return '';
+    return `<div class="group"><h3>${esc(cat[1])}</h3>${items.map(c=>`<button class="item" data-id="${c.id}" aria-current="${c.id===current&&view==='cat'}"><span class="nm">${esc(c.name)}</span><span class="cd">${esc(c.icd10.map(x=>x[0]).join(' · '))}${c.proc.length?' · '+esc(c.proc.join(', ')):''}</span></button>`).join('')}</div>`;
+  }).join('');
+  $('#list').innerHTML = html || '<div class="empty">Brak wyników. Spróbuj kodu (np. M17, 81.54, 93.3930) albo innej nazwy.</div>';
+  $('#pick').innerHTML = C.filter(c=>(filter==='all'||filter===c.cat)&&matches(c,query)).map(c=>`<option value="${c.id}" ${c.id===current?'selected':''}>${esc(c.name)}</option>`).join('');
+}
+
+function procTable(rows,cls){
+  if(!rows.length) return '';
+  return `<table class="proc ${cls}-tab"><tbody>${rows.map(([code,note])=>{
+    const sub = D[code] && D[code][2] && cls==='f' ? `<span class="tag">${esc(D[code][2])}</span>` : '';
+    return `<tr><td class="c"><span>${esc(code)}</span></td><td class="nm">${sub}${esc(nameOf(code))}</td><td class="nt">${esc(note||'')}</td></tr>`;}).join('')}</tbody></table>`;
+}
+
+function renderCondition(){
+  const c = C.find(x=>x.id===current) || C[0];
+  const cat = CATS.find(x=>x[0]===c.cat)[1];
+  const startIdx = c.phases[0].time.includes('przed') ? 0 : 1;
+  const num = i => ROMAN[i+startIdx];
+  $('#main').innerHTML = `<div class="wrap">
+    <div>
+      <div class="crumb">${esc(cat)}</div>
+      <h1>${esc(c.name)}</h1>
+      <p class="lead">${esc(c.lead)}</p>
+      <div class="codes">
+        ${c.icd10.map(x=>`<span class="code icd10" title="ICD-10">${esc(x[0])} · ${esc(x[1])}</span>`).join('')}
+        ${c.proc.map(x=>`<span class="code op" title="ICD-9 PL – zabieg">${esc(x)} · ${esc(nameOf(x))}</span>`).join('')}
+      </div>
+    </div>
+    <div class="facts">${c.facts.map(f=>`<div class="fact"><div class="k">${esc(f[0])}</div><div class="v">${esc(f[1])}</div></div>`).join('')}</div>
+    <div class="cols">
+      <div class="alert"><h4>Ostrzeżenia i przeciwwskazania</h4><ul>${c.alerts.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>
+      <div class="ebm"><h4>Dowody naukowe</h4><p>${esc(c.ebm)}</p></div>
+    </div>
+    <div class="diagbox"><h4>Diagnostyka fizjoterapeutyczna (każda faza)</h4>
+      <div class="codes">${c.diag.map(d=>`<span class="code"><b>${esc(d)}</b> ${esc(nameOf(d))}</span>`).join('')}</div>
+    </div>
+    <div class="legend"><span class="lk">Kinezyterapia</span><span class="lf">Fizykoterapia i masaż</span><span class="ld">Diagnostyka</span><span class="lo">Zabieg operacyjny</span></div>
+    <nav class="stepper" aria-label="Fazy rehabilitacji">${c.phases.map((p,i)=>`<button class="step" data-go="ph-${i}"><span class="n">Faza ${num(i)}</span><span class="t">${esc(p.name)}</span><span class="tm">${esc(p.time)}</span></button>`).join('')}</nav>
+    ${c.phases.map((p,i)=>`<section class="phase" id="ph-${i}">
+      <div class="phase-h"><span class="num">${num(i)}</span><h2>${esc(p.name)}</h2><span class="tm">${esc(p.time)}</span>
+        <button class="copy" data-copy="${i}">Kopiuj kody fazy</button></div>
+      <div class="phase-b">
+        <div><p class="lbl g">Cele</p><ul class="goals">${p.goals.map(g=>`<li>${esc(g)}</li>`).join('')}</ul></div>
+        <div><p class="lbl k">Kinezyterapia</p>${procTable(p.k,'k')}</div>
+        ${p.f.length?`<div><p class="lbl f">Fizykoterapia i masaż</p>${procTable(p.f,'f')}</div>`:''}
+        <div class="next"><b>Kryterium przejścia:</b> ${esc(p.next)}</div>
+      </div></section>`).join('')}
+    <p class="foot">Materiał poglądowy dla fizjoterapeutów i lekarzy. Obciążanie, zakresy ruchu i terminy zawsze ustala lekarz prowadzący lub operator; protokół trzeba dostosować do pacjenta. Nazwy procedur wg słownika ICD-9 PL (wersja obowiązująca od 01.01.2025); przed sprawozdawaniem świadczeń sprawdź kod w aktualnej wersji słownika NFZ.</p>
+  </div>`;
+  $('#main').scrollTop = 0;
+}
+
+function renderDict(){
+  const used = {};
+  C.forEach(c=>{
+    const add=code=>{(used[code]=used[code]||new Set()).add(c.id)};
+    c.proc.forEach(add); c.diag.forEach(add);
+    c.phases.forEach(p=>[...p.k,...p.f].forEach(x=>add(x[0])));
+  });
+  const codes = Object.keys(D);
+  const order = ['d','k','f','o'];
+  const dq = (window._dq||'').toLowerCase();
+  let rows = '';
+  order.forEach(g=>{
+    const list = codes.filter(k=>D[k][1]===g && (!dq || (k+' '+D[k][0]+' '+(D[k][2]||'')).toLowerCase().includes(dq)));
+    if(!list.length) return;
+    rows += `<tr class="sec"><td colspan="4"><span class="g${g}">■</span> ${esc(G[g])}</td></tr>`;
+    list.forEach(k=>{
+      const u = [...(used[k]||[])].map(id=>C.find(c=>c.id===id));
+      rows += `<tr><td class="c g${g}">${esc(k)}</td><td>${esc(D[k][0])}</td><td>${esc(D[k][2]||'')}</td><td><div class="uses">${u.map(c=>`<a href="#${c.id}">${esc(c.name.replace(/ –.*/,''))}</a>`).join('')||'<span style="color:var(--muted)">–</span>'}</div></td></tr>`;
+    });
+  });
+  $('#main').innerHTML = `<div class="wrap">
+    <div><div class="crumb">Słownik</div><h1>Kody ICD-9 PL użyte w protokołach</h1>
+    <p class="lead">${codes.length} procedur z rozdziałów 93.0–93.3 (fizjoterapia), 79 (nastawienie złamań) i 81 (endoprotezoplastyka). Kliknij schorzenie, aby otworzyć jego protokół.</p></div>
+    <div class="dict-tools"><input id="dq" type="search" placeholder="Szukaj kodu lub nazwy, np. 93.39, laser, TENS" value="${esc(window._dq||'')}" aria-label="Szukaj w słowniku"></div>
+    <div style="overflow-x:auto"><table class="dict"><thead><tr><th>Kod</th><th>Nazwa procedury</th><th>Grupa</th><th>Stosowany w</th></tr></thead><tbody>${rows||'<tr><td colspan="4">Brak wyników.</td></tr>'}</tbody></table></div>
+    <p class="foot">Źródło nazw: Międzynarodowa Klasyfikacja Procedur Medycznych ICD-9 PL (wersja danych z 11.01.2025). Pisownia nazw 93.27 i 93.28 zgodna ze słownikiem.</p>
+  </div>`;
+  const inp = $('#dq');
+  inp.addEventListener('input',e=>{window._dq=e.target.value;const pos=e.target.selectionStart;renderDict();const n=$('#dq');n.focus();n.setSelectionRange(pos,pos);});
+}
+
+function render(){
+  $('#tab-cat').setAttribute('aria-selected',view==='cat');
+  $('#tab-dict').setAttribute('aria-selected',view==='dict');
+  renderChips(); renderList();
+  view==='cat' ? renderCondition() : renderDict();
+}
+
+function fromHash(){
+  const h = location.hash.slice(1);
+  if(h==='slownik'){view='dict';}
+  else if(C.some(c=>c.id===h)){view='cat';current=h;}
+  render();
+}
+
+let toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),1800);}
+
+document.addEventListener('click',e=>{
+  const it = e.target.closest('.item'); if(it){location.hash=it.dataset.id;return;}
+  const ch = e.target.closest('.chip'); if(ch){filter=ch.dataset.f;renderChips();renderList();return;}
+  const st = e.target.closest('.step'); if(st){document.getElementById(st.dataset.go).scrollIntoView({behavior:'smooth',block:'start'});return;}
+  const cp = e.target.closest('.copy');
+  if(cp){
+    const c = C.find(x=>x.id===current), p = c.phases[+cp.dataset.copy];
+    const txt = `${c.name} – faza: ${p.name} (${p.time})\n`+[...p.k,...p.f].map(([k,n])=>`${k}\t${nameOf(k)}${n?' – '+n:''}`).join('\n');
+    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast('Skopiowano kody fazy')).catch(()=>toast('Schowek niedostępny w tym widoku'));
+  }
+});
+$('#tab-cat').onclick=()=>{location.hash=current;};
+$('#tab-dict').onclick=()=>{location.hash='slownik';};
+$('#q').addEventListener('input',e=>{query=e.target.value.trim();renderList();});
+$('#pick').addEventListener('change',e=>{location.hash=e.target.value;});
+window.addEventListener('hashchange',fromHash);
+fromHash();
+</script>
+</body>
+</html>
